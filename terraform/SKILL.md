@@ -14,8 +14,7 @@ description: Terraform and OpenTofu best practices for variables, modules, descr
 
 - Do not set `nullable = true` on variables; that is the default and is redundant.
 - Only set `nullable = false` when the variable must not be null.
-- Avoid `default` on variables; pass values at the call site if possible.
-- AVOID relying on default values, especially for infra code.
+- Pass every value explicitly at the call site. Defaults and fallbacks—variable defaults, provider defaults, resource defaults, coalesce/fallback patterns—hide decisions and make behavior opaque. We hate them; use only as a last resort.
 
 ## Module structure
 
