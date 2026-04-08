@@ -140,6 +140,22 @@ bkt pr checks 42 --fail-fast              # Exit on first failure
 bkt pr checkout 42                        # Fetches to pr/42 branch
 ```
 
+### Resolve PR comment threads (Bitbucket Cloud)
+
+**Resolve** an inline/diff comment thread:
+
+```bash
+bkt api "/2.0/repositories/{workspace}/{repo_slug}/pullrequests/{pull_request_id}/comments/{comment_id}/resolve" --method POST
+```
+
+**Reopen** (optional): same URL with `--method DELETE` (Bitbucket Cloud REST: removes the resolved state from the thread).
+
+Bitbucket only allows resolving **inline / diff** comments this way. General PR comments often return `403` ("You can only resolve comments on the diff"). For those, reply in thread with:
+
+```bash
+bkt pr comment <id> --text "..." --parent <comment_id>
+```
+
 ## Branch Management
 
 ```bash
@@ -209,9 +225,11 @@ bkt api /repositories --param workspace=myteam --field pagelen=50
 All commands support structured output:
 
 ```bash
-bkt pr list --json                        # JSON output
+bkt pr list --json                        # JSON: object with .pull_requests (not a bare array at the root)
 bkt pr list --yaml                        # YAML output
 bkt pr list --json | jq '.pull_requests[0].title'
+# Open PR for current branch — use .pull_requests[], not [.[] | ...] on the root object:
+bkt pr list --state OPEN --json | jq --arg b "$(git branch --show-current)" '.pull_requests[] | select(.source.branch.name == $b)'
 ```
 
 ## Global Options
