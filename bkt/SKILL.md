@@ -140,6 +140,16 @@ bkt pr checks 42 --fail-fast              # Exit on first failure
 bkt pr checkout 42                        # Fetches to pr/42 branch
 ```
 
+### Find open PR for current branch
+
+`bkt pr list` has no `--source` filter. `bkt pr list --json` returns `{pull_requests: [...], repo, workspace}` — not a bare array — so `--jq ".[]"` will fail. Pipe to `jq` and index into `.pull_requests[]`:
+
+```bash
+bkt pr list --state OPEN --json \
+  | jq --arg b "$(git branch --show-current)" \
+    '.pull_requests[] | select(.source.branch.name == $b) | {id, title}'
+```
+
 ### Resolve PR comment threads (Bitbucket Cloud)
 
 **Resolve** an inline/diff comment thread:
@@ -228,9 +238,15 @@ All commands support structured output:
 bkt pr list --json                        # JSON: object with .pull_requests (not a bare array at the root)
 bkt pr list --yaml                        # YAML output
 bkt pr list --json | jq '.pull_requests[0].title'
-# Open PR for current branch — use .pull_requests[], not [.[] | ...] on the root object:
-bkt pr list --state OPEN --json | jq --arg b "$(git branch --show-current)" '.pull_requests[] | select(.source.branch.name == $b)'
+bkt pr comments 42 --json | jq '.comments[0].content.raw'   # also wrapped: {comments: [...]}
 ```
+
+**List-response envelopes.** `bkt` wraps list outputs, so `--jq ".[]"` will fail on them. Pipe to `jq` and unwrap:
+
+| Command | Root key |
+|---------|----------|
+| `bkt pr list --json` | `.pull_requests[]` |
+| `bkt pr comments --json` | `.comments[]` |
 
 ## Global Options
 
