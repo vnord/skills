@@ -42,6 +42,12 @@ When proposing fixes:
 - Keep concerns cleanly separated.
 - Prefer referential transparency, purity, composability, and testability.
 
+## Code style
+
+- Prefer sentence case.
+- Avoid excessive explanatory comments; comment only when something is non-obvious or would be surprising.
+- Avoid descriptions that repeat what the code already makes clear.
+
 ## Reviews
 
 - When reviewing code, challenge choices and assumptions, especially implicit ones.
