@@ -1,12 +1,12 @@
 ---
-
-## name: branch-review-canvas
+name: branch-review-canvas
 description: >-
   Render a supplied branch or commit diff, or the current branch diff against
   main, as a Cursor Canvas that groups changes by reviewer importance,
   separates boilerplate from core logic, and highlights tricky or unexpected
   code. Use when reviewing a branch, commit, local diff, or when the user asks
   for a branch review canvas, diff walkthrough, or change-set overview.
+---
 
 # Branch review canvas
 
