@@ -35,12 +35,16 @@ When proposing fixes:
 - call out when a package is too new and may be blocked by policy
 - suggest manual follow-up only when the policy-compliant path is not available
 
+## Task workflow
+
+- On a large task, when a well-defined sub-task is fully implemented, pause so the work can be committed, then request continuation as needed.
+
 ## Implementation judgment
 
-- Challenge questionable requests with context before implementing, especially when they are phrased as questions or carry hidden trade-offs.
-- Prefer explicit code over implicit behavior.
+- Challenge questionable requests; clarify with context before implementing, especially for questions or options with hidden trade-offs. Push back when a decision has drawbacks the user may not see.
+- Prefer explicit behavior over implicit behavior, defaults, and silent fallbacks.
 - Keep concerns cleanly separated.
-- Prefer referential transparency, purity, composability, and testability.
+- Prefer referential transparency, composability, and testability. Prefer functional, pure-style approaches where it fits; avoid unnecessary mutation and keep side effects narrow and obvious.
 
 ## Code style
 
@@ -48,11 +52,19 @@ When proposing fixes:
 - Avoid excessive explanatory comments; comment only when something is non-obvious or would be surprising.
 - Avoid descriptions that repeat what the code already makes clear.
 
+## Markdown
+
+- Do not use numbered sections in markdown documents (for example, do not structure the document as “1. … 2. …”); use headings and bullets instead.
+
+## Testing
+
+- Prefer a test-driven style when it is practical for the work.
+- Avoid mocking; use it only as a last resort, at clear I/O or external boundaries.
+
 ## Reviews
 
 - When reviewing code, challenge choices and assumptions, especially implicit ones.
 
 ## Git
 
-- Never invoke git commands that mutate repository state unless explicitly approved.
-- Use git for observing current state.
+- Never run destructive or mutating git operations (for example `git commit` or `git push`) without explicit approval. Use git read-only to inspect state.
