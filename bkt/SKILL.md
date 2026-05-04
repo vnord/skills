@@ -17,12 +17,12 @@ bkt --version
 
 If the command fails or `bkt` is not found, install it using one of these methods:
 
-| Platform | Command |
-|----------|---------|
-| macOS/Linux | `brew install avivsinai/tap/bitbucket-cli` |
-| Windows | `scoop bucket add avivsinai https://github.com/avivsinai/scoop-bucket && scoop install bitbucket-cli` |
-| Go | `go install github.com/avivsinai/bitbucket-cli/cmd/bkt@latest` |
-| Binary | Download from [GitHub Releases](https://github.com/avivsinai/bitbucket-cli/releases) |
+| Platform    | Command                                                                                               |
+| ----------- | ----------------------------------------------------------------------------------------------------- |
+| macOS/Linux | `brew install avivsinai/tap/bitbucket-cli`                                                            |
+| Windows     | `scoop bucket add avivsinai https://github.com/avivsinai/scoop-bucket && scoop install bitbucket-cli` |
+| Go          | `go install github.com/avivsinai/bitbucket-cli/cmd/bkt@latest`                                        |
+| Binary      | Download from [GitHub Releases](https://github.com/avivsinai/bitbucket-cli/releases)                  |
 
 **Only proceed with `bkt` commands after confirming installation succeeds.**
 
@@ -66,28 +66,28 @@ bkt context use cloud-team
 
 ## Quick Command Reference
 
-| Task | Command |
-|------|---------|
-| List repos | `bkt repo list` |
-| View repo | `bkt repo view <slug>` |
-| Clone repo | `bkt repo clone <slug> --ssh` |
-| Create repo | `bkt repo create <name> --description "..."` |
-| List PRs | `bkt pr list --state OPEN` |
-| View PR | `bkt pr view <id>` |
-| Create PR | `bkt pr create --title "..." --source feature --target main` |
-| Create draft PR | `bkt pr create --title "..." --source feature --target main --draft` |
-| Publish draft PR | `bkt pr publish <id>` |
-| Unpublish PR | `bkt pr publish --undo <id>` |
-| Merge PR | `bkt pr merge <id>` |
-| PR checks | `bkt pr checks <id> --wait` |
-| List branches | `bkt branch list` |
-| Create branch | `bkt branch create <name> --from main` |
-| Delete branch | `bkt branch delete <name>` |
-| List issues (Cloud) | `bkt issue list --state open` |
-| Create issue | `bkt issue create -t "Bug title" -k bug` |
-| Webhooks | `bkt webhook list` |
-| Run pipeline | `bkt pipeline run --ref main` |
-| API escape hatch | `bkt api /rest/api/1.0/projects` |
+| Task                | Command                                                              |
+| ------------------- | -------------------------------------------------------------------- |
+| List repos          | `bkt repo list`                                                      |
+| View repo           | `bkt repo view <slug>`                                               |
+| Clone repo          | `bkt repo clone <slug> --ssh`                                        |
+| Create repo         | `bkt repo create <name> --description "..."`                         |
+| List PRs            | `bkt pr list --state OPEN`                                           |
+| View PR             | `bkt pr view <id>`                                                   |
+| Create PR           | `bkt pr create --title "..." --source feature --target main`         |
+| Create draft PR     | `bkt pr create --title "..." --source feature --target main --draft` |
+| Publish draft PR    | `bkt pr publish <id>`                                                |
+| Unpublish PR        | `bkt pr publish --undo <id>`                                         |
+| Merge PR            | `bkt pr merge <id>`                                                  |
+| PR checks           | `bkt pr checks <id> --wait`                                          |
+| List branches       | `bkt branch list`                                                    |
+| Create branch       | `bkt branch create <name> --from main`                               |
+| Delete branch       | `bkt branch delete <name>`                                           |
+| List issues (Cloud) | `bkt issue list --state open`                                        |
+| Create issue        | `bkt issue create -t "Bug title" -k bug`                             |
+| Webhooks            | `bkt webhook list`                                                   |
+| Run pipeline        | `bkt pipeline run --ref main`                                        |
+| API escape hatch    | `bkt api /rest/api/1.0/projects`                                     |
 
 ## Repository Operations
 
@@ -121,8 +121,7 @@ bkt pr publish --undo 42                  # Convert PR back to draft
 
 # Review and merge
 bkt pr approve 42
-bkt pr comment 42 --text "LGTM"
-bkt pr comment 42 --text "Needs refactor" --pending   # Pending (draft) comment
+bkt pr comment 42 --text "LGTM"                       # General/activity-level comment
 bkt pr merge 42 --message "merge: feature/cache"
 bkt pr merge 42 --strategy fast-forward
 
@@ -135,6 +134,48 @@ bkt pr checks 42 --fail-fast              # Exit on first failure
 # Checkout locally
 bkt pr checkout 42                        # Fetches to pr/42 branch
 ```
+
+### PR comments: inline by default
+
+**Default policy: when a comment refers to specific code, post it inline anchored to the file and line.** General/activity-level comments are reserved for PR-wide remarks (overall verdict, scope questions, follow-up tracking). Reviewers can resolve inline threads independently in the Bitbucket UI; activity comments cannot be resolved per-finding, which makes long reviews unmanageable.
+
+If you have several findings, post **one inline comment per finding** rather than one fat general comment.
+
+`bkt pr comment` flags (no `--help` discovery needed):
+
+| Flag              | Purpose                                                                                                     |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| `--text <msg>`    | Comment body (required)                                                                                     |
+| `--file <path>`   | File path in the diff. Requires `--from-line` and/or `--to-line`. Path is repo-relative, matching the diff. |
+| `--to-line <n>`   | Line in the **new** file (added/destination side). Use this for comments on current code.                   |
+| `--from-line <n>` | Line in the **old** file (removed/source side). Use for comments on deletions.                              |
+| `--parent <id>`   | Reply to an existing comment thread.                                                                        |
+| `--pending`       | Create as a pending (draft) review comment, not visible until submitted.                                    |
+
+```bash
+# Inline comment on current code (most common)
+bkt pr comment 42 --file src/auth.ts --to-line 88 \
+  --text "This swallows decrypt failures as 404 — distinguish 'not found' from 'undecodable'."
+
+# Inline comment on a deleted line
+bkt pr comment 42 --file src/legacy.ts --from-line 120 \
+  --text "Was this intentional? The fallback path relied on this branch."
+
+# Reply in an existing thread
+bkt pr comment 42 --parent 1001 --text "Fixed in the latest push."
+
+# Pending (draft) inline comment, batched into a review
+bkt pr comment 42 --file api.go --to-line 30 --text "Consider error handling here." --pending
+
+# General/activity-level comment (PR-wide, not anchored to code)
+bkt pr comment 42 --text "Overall LGTM, blocking on the four inline threads."
+```
+
+Posting many inline comments in parallel is safe — each is an independent API call. When generating them programmatically, batch the `bkt pr comment` invocations rather than serialising.
+
+**Line-number caveats:**
+- Line numbers must match the diff's view of the file. Read the *current* file to get post-merge line numbers (Bitbucket Cloud anchors `--to-line` to the new-file side as it appears in the PR diff).
+- A line you want to comment on must be part of the diff (added, modified, or in the surrounding context shown by the diff). Lines fully outside the changed regions cannot be anchored.
 
 ### Find open PR for current branch
 
@@ -239,10 +280,10 @@ bkt pr comments 42 --json | jq '.comments[0].content.raw'   # also wrapped: {com
 
 **List-response envelopes.** `bkt` wraps list outputs, so `--jq ".[]"` will fail on them. Pipe to `jq` and unwrap:
 
-| Command | Root key |
-|---------|----------|
-| `bkt pr list --json` | `.pull_requests[]` |
-| `bkt pr comments --json` | `.comments[]` |
+| Command                  | Root key           |
+| ------------------------ | ------------------ |
+| `bkt pr list --json`     | `.pull_requests[]` |
+| `bkt pr comments --json` | `.comments[]`      |
 
 ## Global Options
 
