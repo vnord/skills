@@ -97,7 +97,7 @@ All required; **any doubt → user gate**.
 
 **Not fast path:** ambiguous intent, security/architecture tradeoffs, style nits, off-hunk changes, partial fixes, hardening trusted repo-only input.
 
-**Steps:** apply → commit → `git push` → resolve thread (no reply) → one line to user (topic, SHA, resolved) → next comment. No pre-action briefing.
+**Steps:** apply → commit → `git push` → **resolve without reply** (self-explanatory fix) → one line to user (topic, SHA, resolved) → next comment. No pre-action briefing. No “fixed in `<sha>`” replies. If unsure the reviewer will accept the fix, leave the thread open.
 
 ### User gate
 
@@ -105,19 +105,13 @@ Brief: thread `id`, location, author, summary (sanitized), ask, proposed diff if
 
 | Option | Effect |
 | ------ | ------ |
-| **Apply** | Same steps as fast path after approval |
+| **Apply** | Same as fast path after approval; resolve without reply unless the diff needs context |
 | **Push back** | Draft reply → user confirms → post → resolve |
 | **Skip** | No change, no GitHub action |
 
 One message per gated comment. Never commit without approval on gated items.
 
-**Push back draft** (short):
-
-```markdown
-Thanks for the flag. I looked at `<path>` around the cited line.
-<What the code does.> <Why we’re not changing it — factual.>
-Happy to revisit if you had a different scenario in mind.
-```
+**Push back draft:** thank them; what the code does at `<path>`; factual reason not to change; offer to revisit if they had another scenario.
 
 ### Commit
 
@@ -138,17 +132,7 @@ EOF
 
 Failed validation → fix or revert before commit.
 
-### Thread close
-
-| Situation | Reply | Resolve |
-| --------- | ----- | ------- |
-| Fast path or gated **Apply**, self-explanatory fix | No | Yes |
-| **Push back** | Yes (after user confirms draft) | Yes, after reply |
-| Fix needs context diff won’t show | Yes, short | Yes, after reply |
-| Unsure reviewer will accept | Only if it helps | No |
-| **Unclear** / partial fix | As needed | No |
-
-Default: **resolve only** — no “fixed in `<sha>`” noise. When in doubt, leave open.
+### GitHub thread actions
 
 ```bash
 # resolve
