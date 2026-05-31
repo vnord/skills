@@ -37,7 +37,10 @@ When proposing fixes:
 
 ## Task workflow
 
-- On a large task, when a well-defined sub-task is fully implemented, pause so the work can be committed, then request continuation as needed.
+- On large tasks, commit regularly rather than accumulating one large diff at the end.
+- Aim for small, self-contained commits: one logical change that is easy to review, revert, or cherry-pick on its own.
+- Each commit must leave the tree green and correct. Run relevant tests, lint, or build checks before committing; do not commit broken, failing, or knowingly incomplete work.
+- When a well-defined sub-task is fully implemented and verified, commit it, then continue with the next sub-task.
 
 ## Implementation judgment
 
