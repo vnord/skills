@@ -1,15 +1,13 @@
 ---
-
 name: address-pr-comments
 description: >-
-Triage open pull request review comments with gh, validate each against the
-codebase (subagents when needed), apply accepted fixes as separate commits,
-push back on-thread when that is better than a code change, resolve threads when
-feedback is fully addressed (usually without an extra comment), and ask the user when a fix is not
-clearly necessary. Use when the user wants to address PR comments, review
-feedback, unresolved review threads, or walk through and fix reviewer requests.
+  Triage open pull request review comments with gh, validate each against the
+  codebase (subagents when needed), apply accepted fixes as separate commits,
+  push back on-thread when that is better than a code change, resolve threads when
+  feedback is fully addressed (usually without an extra comment), and ask the user when a fix is not
+  clearly necessary. Use when the user wants to address PR comments, review
+  feedback, unresolved review threads, or walk through and fix reviewer requests.
 disable-model-invocation: true
-
 ---
 
 # Address PR comments
