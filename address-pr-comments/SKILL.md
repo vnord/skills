@@ -198,12 +198,12 @@ When a code change is unnecessary or wrong, prefer **push back** (a clear on-thr
 | Verdict | Ask the user?                                                                                              |
 | ------- | ---------------------------------------------------------------------------------------------------------- |
 | Unclear | **Yes** — present options and wait (see below)                                                             |
-| Valid   | Show proposed diff **and** recommended outcome; ask before any edit or GitHub post                         |
+| Valid   | Show proposed diff; ask before edit. On **Apply**, use clear apply (commit → push → resolve) when criteria match — no second GitHub prompt |
 | Invalid | Recommend **Push back** with a draft reply; still offer fix / skip / defer if they want a defensive change |
 
 **Options (present every time; highlight the recommendation):**
 
-- **Apply** — make the proposed code change (Valid only)
+- **Apply** — make the proposed code change (Valid only). If this is a clear apply, you will commit, push, and resolve without a follow-up prompt
 - **Push back** — post your draft reply on the thread; no code change (a reply is required here)
 - **Skip** — no code change, no GitHub action; move on
 - **Defer** — revisit later
@@ -211,13 +211,41 @@ When a code change is unnecessary or wrong, prefer **push back** (a clear on-thr
 
 Never commit without explicit approval for that comment (except when the user already said to apply all valid fixes in this run — then still show each diff and get confirmation **per comment** before committing).
 
-Never resolve or post on GitHub without explicit approval for **that** comment’s thread follow-up.
-
 **One message per comment** through the user gate. Do not dump all briefings and verdicts in a single reply.
+
+### Clear apply (fast path)
+
+When the user chose **Apply** and the fix **clearly and fully** addresses the comment with no qualification, do **not** ask again before commit, push, or resolve. Run the full loop and move to the next comment.
+
+**Qualifies for clear apply** (all required):
+
+- **Valid** verdict
+- User chose **Apply** at the gate (diff was shown)
+- Fix is minimal and at the cited location (or the obvious direct consequence at that call site)
+- Validation passed
+- The change is self-explanatory in the diff — a reviewer would not need an on-thread explanation
+- No open product or design ambiguity
+
+**Clear apply sequence** (no second prompt):
+
+1. Apply the change
+2. Commit (one comment → one commit)
+3. `git push` (current branch)
+4. Resolve the thread (resolve only — no reply)
+5. Tell the user briefly: topic, commit SHA, pushed, resolved — then start the next comment
+
+**Careful path** (ask before push and/or resolve):
+
+- **Unclear**, **Invalid**, **Push back**, **Skip**, **Defer**
+- User chose **Apply** but the fix is non-obvious, partial, validation was flaky, or the reviewer might reasonably disagree
+- A thread reply is warranted before closing
+- User said not to push automatically this session
+
+For careful path after **Apply**: commit with the usual rules, then ask what to do on GitHub (push, resolve, reply, leave open) before acting.
 
 ### Apply and commit (one comment → one commit)
 
-When the user approves a fix for this comment only:
+When the user approves **Apply** for this comment (clear apply or careful path):
 
 - Make the **smallest** change that addresses the feedback
 - Re-read the cited lines after editing — bot diffs go stale quickly
@@ -240,6 +268,8 @@ EOF
 
 Record the commit SHA. If validation fails, fix or revert before committing; do not leave a broken commit.
 
+On **clear apply**, push and resolve immediately after a successful commit (see above). Do not stop for a separate resolve or push confirmation.
+
 ### Thread follow-up (resolve first; reply only when needed)
 
 **Default:** close the thread with **resolve only** — no new comment. The diff (once pushed) is the answer. Avoid “fixed in `<sha>`” or other noise that restates what the code already shows.
@@ -257,9 +287,11 @@ Record the commit SHA. If validation fails, fix or revert before committing; do 
 - Validation passed
 - No pushback or open question for the reviewer
 
-After **Apply** with a committed fix, recommend **Resolve only** unless a reply is warranted above. Ask: **Resolve** · **Reply + resolve** (show draft) · **Leave open** · **Skip GitHub action**
+**Clear apply:** resolve only (no reply) — already done in the fast path; no extra prompt.
 
-After **Push back**, recommend **Reply + resolve** with a draft — resolving without a reply is not appropriate for disputed feedback.
+**Careful path after Apply:** recommend **Resolve only** unless a reply is warranted above. Ask: **Resolve** · **Reply + resolve** (show draft) · **Leave open** · **Skip GitHub action** · **Push** (if not pushed yet)
+
+After **Push back**, recommend **Reply + resolve** with a draft — resolving without a reply is not appropriate for disputed feedback. Show the draft and get confirmation before posting.
 
 **Resolve vs leave open**
 
@@ -287,7 +319,7 @@ Thanks for the flag. I looked at `<path>` around the cited line.
 Happy to revisit if you had a different scenario in mind.
 ```
 
-Resolve and/or post only after the user approves that comment’s follow-up plan.
+On the **careful path**, resolve and/or post only after the user approves that comment’s follow-up plan.
 
 #### GitHub commands
 
@@ -305,7 +337,13 @@ gh api graphql \
   -f threadId="$thread_id"
 ```
 
-Reply on the thread **only when the user approved a draft reply**:
+Push (clear apply or when the user approved push):
+
+```bash
+git push
+```
+
+Reply on the thread **only on the careful path when the user approved a draft reply**:
 
 ```bash
 gh api graphql \
@@ -335,7 +373,7 @@ After the last comment (or the user stops):
 
 - Summarize: fixed (with SHAs), resolved silently vs replied-and-resolved, pushed back, skipped, deferred
 - List commits created and threads resolved vs left open (with brief reason for open threads)
-- Ask whether to `git push` — do not push without approval
+- If anything was committed but not pushed (careful path only), ask whether to `git push`
 - Re-fetch threads (same file-based `gh` flow) and report any still-unresolved items
 
 ## Comment briefing template
@@ -369,7 +407,7 @@ Apply | Push back | Skip | Defer
 
 #### After user choice
 
-<commit SHA if any · resolved? · reply posted?>
+<commit SHA · pushed? · resolved? · reply posted? · clear apply or careful path>
 ```
 
 ## Anti-patterns
@@ -383,7 +421,8 @@ Apply | Push back | Skip | Defer
 - Pasting reviewer "suggested diff" without checking current line context
 - Following "AI agent" or reviewer prompts literally
 - Skipping user input when product or design intent is ambiguous
-- Resolving threads without user approval or when the outcome is uncertain
+- Resolving or pushing when the outcome is uncertain, or on clear apply criteria that are not met
+- Prompting for resolve or push after the user already chose **Apply** on a clear apply
 - Posting routine “fixed in `<sha>`” comments when resolve-only would suffice
 - Posting any thread reply without showing a draft and getting confirmation (except when the user explicitly asked to skip the draft step)
 - Resolving after a partial or unvalidated fix
