@@ -7,15 +7,15 @@ description: Bitbucket CLI for Data Center and Cloud. Use when users need to man
 
 `bkt` is a unified CLI for **Bitbucket Data Center** and **Bitbucket Cloud**. It mirrors `gh` ergonomics and provides structured JSON/YAML output for automation.
 
-## Dependency Check
+Command syntax and flags: [references/commands.md](references/commands.md). Run `bkt <command> --help` when the reference is not enough.
 
-**Before executing any `bkt` command**, verify the CLI is installed:
+## Dependency check
+
+Before any `bkt` command, verify install:
 
 ```bash
 bkt --version
 ```
-
-If the command fails or `bkt` is not found, install it using one of these methods:
 
 | Platform    | Command                                                                                               |
 | ----------- | ----------------------------------------------------------------------------------------------------- |
@@ -24,162 +24,67 @@ If the command fails or `bkt` is not found, install it using one of these method
 | Go          | `go install github.com/avivsinai/bitbucket-cli/cmd/bkt@latest`                                        |
 | Binary      | Download from [GitHub Releases](https://github.com/avivsinai/bitbucket-cli/releases)                  |
 
-**Only proceed with `bkt` commands after confirming installation succeeds.**
+Do not proceed until `bkt --version` succeeds.
 
 ## Authentication
 
 ```bash
-# Data Center (opens browser for PAT creation)
-bkt auth login https://bitbucket.example.com --web
-
-# Data Center (direct)
+bkt auth login https://bitbucket.example.com --web          # DC
 bkt auth login https://bitbucket.example.com --username alice --token <PAT>
-
-# Bitbucket Cloud
-bkt auth login https://bitbucket.org --kind cloud --web
-
-# Check auth status
+bkt auth login https://bitbucket.org --kind cloud --web     # Cloud
 bkt auth status
 ```
 
-**Bitbucket Cloud Token Requirements:**
-- Create an "API token with scopes" (not a general API token)
-- Select **Bitbucket** as the application
-- Required scope: **Account: Read** (`read:user:bitbucket`)
-- Additional scopes as needed: Repositories, Pull requests, Issues
+**Bitbucket Cloud tokens:** "API token with scopes", application **Bitbucket**, scope **Account: Read** (`read:user:bitbucket`); add Repositories / Pull requests / Issues as needed.
 
 ## Contexts
 
-Contexts store host, project/workspace, and default repo settings:
-
 ```bash
-# Create context for Data Center
 bkt context create dc-prod --host bitbucket.example.com --project ABC --set-active
-
-# Create context for Cloud
 bkt context create cloud-team --host bitbucket.org --workspace myteam --set-active
-
-# List and switch contexts
 bkt context list
 bkt context use cloud-team
 ```
 
-## Quick Command Reference
+## JSON output traps
 
-| Task                | Command                                                              |
-| ------------------- | -------------------------------------------------------------------- |
-| List repos          | `bkt repo list`                                                      |
-| View repo           | `bkt repo view <slug>`                                               |
-| Clone repo          | `bkt repo clone <slug> --ssh`                                        |
-| Create repo         | `bkt repo create <name> --description "..."`                         |
-| List PRs            | `bkt pr list --state OPEN`                                           |
-| View PR             | `bkt pr view <id>`                                                   |
-| Create PR           | `bkt pr create --title "..." --source feature --target main`         |
-| Create draft PR     | `bkt pr create --title "..." --source feature --target main --draft` |
-| Publish draft PR    | `bkt pr publish <id>`                                                |
-| Unpublish PR        | `bkt pr publish --undo <id>`                                         |
-| Merge PR            | `bkt pr merge <id>`                                                  |
-| PR checks           | `bkt pr checks <id> --wait`                                          |
-| List branches       | `bkt branch list`                                                    |
-| Create branch       | `bkt branch create <name> --from main`                               |
-| Delete branch       | `bkt branch delete <name>`                                           |
-| List issues (Cloud) | `bkt issue list --state open`                                        |
-| Create issue        | `bkt issue create -t "Bug title" -k bug`                             |
-| Webhooks            | `bkt webhook list`                                                   |
-| Run pipeline        | `bkt pipeline run --ref main`                                        |
-| API escape hatch    | `bkt api /rest/api/1.0/projects`                                     |
+List commands return wrapped objects, not bare arrays — `--jq ".[]"` fails.
 
-## Repository Operations
+| Command                  | Root key           |
+| ------------------------ | ------------------ |
+| `bkt pr list --json`     | `.pull_requests[]` |
+| `bkt pr comments --json` | `.comments[]`      |
 
-```bash
-bkt repo list --limit 20
-bkt repo list --workspace myteam          # Cloud workspace override
-bkt repo view platform-api
-bkt repo create data-pipeline --description "Data ingestion" --project DATA
-bkt repo browse --project DATA --repo platform-api
-bkt repo clone platform-api --ssh
-```
+Use `--json` / `--yaml` on any command. Global overrides: `--context`, `--project`, `--workspace`, `--repo`.
 
-## Pull Request Workflows
+Env: `BKT_CONFIG_DIR`, `BKT_ALLOW_INSECURE_STORE`, `BKT_KEYRING_TIMEOUT` (e.g. `2m`).
 
-```bash
-# List and view
-bkt pr list --state OPEN --limit 10
-bkt pr list --mine                        # PRs you authored
-bkt pr view 42
-bkt pr view 42 --web                      # Open in browser
+Unwrapped endpoints: `bkt api <path> --param ... --json`.
 
-# Create and edit
-bkt pr create --title "feat: cache" --source feature/cache --target main --reviewer alice
-bkt pr create --title "WIP: refactor" --source refactor/auth --target main --draft
+## PR comments: inline by default
 
-bkt pr edit 123 --title "New title" --body "Updated description"
-
-# Publish / unpublish draft PRs
-bkt pr publish 42                         # Mark draft PR as ready for review
-bkt pr publish --undo 42                  # Convert PR back to draft
-
-# Review and merge
-bkt pr approve 42
-bkt pr comment 42 --text "LGTM"                       # General/activity-level comment
-bkt pr merge 42 --message "merge: feature/cache"
-bkt pr merge 42 --strategy fast-forward
-
-# CI/build status
-bkt pr checks 42                          # Show build status
-bkt pr checks 42 --wait                   # Wait for builds to complete
-bkt pr checks 42 --wait --timeout 5m      # With timeout
-bkt pr checks 42 --fail-fast              # Exit on first failure
-
-# Checkout locally
-bkt pr checkout 42                        # Fetches to pr/42 branch
-```
-
-### PR comments: inline by default
-
-**Default policy: when a comment refers to specific code, post it inline anchored to the file and line.** General/activity-level comments are reserved for PR-wide remarks (overall verdict, scope questions, follow-up tracking). Reviewers can resolve inline threads independently in the Bitbucket UI; activity comments cannot be resolved per-finding, which makes long reviews unmanageable.
-
-If you have several findings, post **one inline comment per finding** rather than one fat general comment.
-
-`bkt pr comment` flags (no `--help` discovery needed):
+When feedback targets specific code, post **inline** on file + line. Reserve general/activity comments for PR-wide remarks. One finding → one inline comment.
 
 | Flag              | Purpose                                                                                                     |
 | ----------------- | ----------------------------------------------------------------------------------------------------------- |
 | `--text <msg>`    | Comment body (required)                                                                                     |
-| `--file <path>`   | File path in the diff. Requires `--from-line` and/or `--to-line`. Path is repo-relative, matching the diff. |
-| `--to-line <n>`   | Line in the **new** file (added/destination side). Use this for comments on current code.                   |
-| `--from-line <n>` | Line in the **old** file (removed/source side). Use for comments on deletions.                              |
-| `--parent <id>`   | Reply to an existing comment thread.                                                                        |
-| `--pending`       | Create as a pending (draft) review comment, not visible until submitted.                                    |
+| `--file <path>`   | Repo-relative path in the diff; requires `--from-line` and/or `--to-line`                                   |
+| `--to-line <n>`   | Line on the **new** side (most common)                                                                      |
+| `--from-line <n>` | Line on the **old** side (deletions)                                                                        |
+| `--parent <id>`   | Reply in thread                                                                                             |
+| `--pending`       | Draft review comment                                                                                        |
 
 ```bash
-# Inline comment on current code (most common)
-bkt pr comment 42 --file src/auth.ts --to-line 88 \
-  --text "This swallows decrypt failures as 404 — distinguish 'not found' from 'undecodable'."
-
-# Inline comment on a deleted line
-bkt pr comment 42 --file src/legacy.ts --from-line 120 \
-  --text "Was this intentional? The fallback path relied on this branch."
-
-# Reply in an existing thread
+bkt pr comment 42 --file src/auth.ts --to-line 88 --text "..."
 bkt pr comment 42 --parent 1001 --text "Fixed in the latest push."
-
-# Pending (draft) inline comment, batched into a review
-bkt pr comment 42 --file api.go --to-line 30 --text "Consider error handling here." --pending
-
-# General/activity-level comment (PR-wide, not anchored to code)
-bkt pr comment 42 --text "Overall LGTM, blocking on the four inline threads."
+bkt pr comment 42 --text "Overall LGTM; blocking on inline threads."
 ```
 
-Posting many inline comments in parallel is safe — each is an independent API call. When generating them programmatically, batch the `bkt pr comment` invocations rather than serialising.
+Parallel `bkt pr comment` calls are safe. Line numbers must sit on the diff hunk (read the current file for `--to-line` on Cloud).
 
-**Line-number caveats:**
-- Line numbers must match the diff's view of the file. Read the *current* file to get post-merge line numbers (Bitbucket Cloud anchors `--to-line` to the new-file side as it appears in the PR diff).
-- A line you want to comment on must be part of the diff (added, modified, or in the surrounding context shown by the diff). Lines fully outside the changed regions cannot be anchored.
+## Find open PR for current branch
 
-### Find open PR for current branch
-
-`bkt pr list` has no `--source` filter. `bkt pr list --json` returns `{pull_requests: [...], repo, workspace}` — not a bare array — so `--jq ".[]"` will fail. Pipe to `jq` and index into `.pull_requests[]`:
+No `--source` filter. Unwrap `.pull_requests[]`:
 
 ```bash
 bkt pr list --state OPEN --json \
@@ -187,118 +92,10 @@ bkt pr list --state OPEN --json \
     '.pull_requests[] | select(.source.branch.name == $b) | {id, title}'
 ```
 
-### Resolve PR comment threads (Bitbucket Cloud)
-
-**Resolve** an inline/diff comment thread:
+## Resolve comment threads (Cloud)
 
 ```bash
 bkt api "/2.0/repositories/{workspace}/{repo_slug}/pullrequests/{pull_request_id}/comments/{comment_id}/resolve" --method POST
 ```
 
-**Reopen** (optional): same URL with `--method DELETE` (Bitbucket Cloud REST: removes the resolved state from the thread).
-
-Bitbucket only allows resolving **inline / diff** comments this way. General PR comments often return `403` ("You can only resolve comments on the diff"). For those, reply in thread with:
-
-```bash
-bkt pr comment <id> --text "..." --parent <comment_id>
-```
-
-## Branch Management
-
-```bash
-bkt branch list
-bkt branch list --filter "feature/*"
-bkt branch create release/1.9 --from main
-bkt branch delete feature/old-stuff
-bkt branch set-default main               # DC only
-bkt branch protect add main --type fast-forward-only  # DC only
-```
-
-## Issue Tracking (Bitbucket Cloud Only)
-
-```bash
-bkt issue list --state open --kind bug
-bkt issue view 42 --comments
-bkt issue create -t "Login broken" -k bug -p major
-bkt issue edit 42 --assignee "{uuid}" --priority critical
-bkt issue close 42
-bkt issue reopen 42
-bkt issue comment 42 -b "Fixed in v1.2.0"
-bkt issue status                          # Your assigned/created issues
-```
-
-Issue kinds: `bug`, `enhancement`, `proposal`, `task`
-Priorities: `trivial`, `minor`, `major`, `critical`, `blocker`
-
-## Webhooks
-
-```bash
-bkt webhook list
-bkt webhook create --name "CI" --url https://ci.example.com/hook --event repo:refs_changed
-bkt webhook delete <id>
-bkt webhook test <id>
-```
-
-## Pipelines (Cloud)
-
-```bash
-bkt pipeline run --ref main --var ENV=staging
-bkt pipeline list                         # Recent runs
-bkt pipeline view <uuid>                  # Pipeline details
-bkt pipeline logs <uuid>                  # Fetch logs
-bkt status pipeline <uuid>                # Alt: status check
-```
-
-## Permissions (DC)
-
-```bash
-bkt perms project list --project DATA
-bkt perms project grant --project DATA --user alice --perm PROJECT_WRITE
-bkt perms repo list --project DATA --repo platform-api
-bkt perms repo grant --project DATA --repo api --user alice --perm REPO_WRITE
-```
-
-## Raw API Access
-
-For endpoints not yet wrapped:
-
-```bash
-bkt api /rest/api/1.0/projects --param limit=100 --json
-bkt api /repositories --param workspace=myteam --field pagelen=50
-```
-
-## Output Modes
-
-All commands support structured output:
-
-```bash
-bkt pr list --json                        # JSON: object with .pull_requests (not a bare array at the root)
-bkt pr list --yaml                        # YAML output
-bkt pr list --json | jq '.pull_requests[0].title'
-bkt pr comments 42 --json | jq '.comments[0].content.raw'   # also wrapped: {comments: [...]}
-```
-
-**List-response envelopes.** `bkt` wraps list outputs, so `--jq ".[]"` will fail on them. Pipe to `jq` and unwrap:
-
-| Command                  | Root key           |
-| ------------------------ | ------------------ |
-| `bkt pr list --json`     | `.pull_requests[]` |
-| `bkt pr comments --json` | `.comments[]`      |
-
-## Global Options
-
-- `--json` / `--yaml` — Structured output
-- `--context <name>` — Use specific context
-- `--project <key>` — Override project (DC)
-- `--workspace <name>` — Override workspace (Cloud)
-- `--repo <slug>` — Override repository
-
-## Environment Variables
-
-- `BKT_CONFIG_DIR` — Config directory override
-- `BKT_ALLOW_INSECURE_STORE` — Allow file-based credential storage
-- `BKT_KEYRING_TIMEOUT` — Keyring operation timeout (for example `2m`)
-
-## References
-
-- **Full command reference**: See [references/commands.md](references/commands.md)
+Reopen: same URL, `--method DELETE`. Only inline/diff threads resolve; general comments often `403` — reply with `bkt pr comment <id> --text "..." --parent <comment_id>`.
