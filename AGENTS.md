@@ -65,10 +65,6 @@ When proposing fixes:
 
 - When reviewing code, challenge choices and assumptions, especially implicit ones.
 
-## Git
-
-- Never run destructive or mutating git operations (for example `git commit` or `git push`) without explicit approval. Use git read-only to inspect state.
-
 ## Local project guidance
 
 - When working in a repository, after reading the normal project instructions, check for an `AGENTS.local.md` file at the repository root. If it exists, read it too; it is developer-specific, git-ignored guidance for that project.
