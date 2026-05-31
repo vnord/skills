@@ -32,23 +32,13 @@ This skill is mutating by design. Use it only when the user explicitly invokes `
 
 ## Backup first
 
-Before changing anything:
-
-- Capture branch and upstream state with `git status --short --branch`, `git branch --show-current`, and recent `git log`.
-- Create a named backup ref or branch at the original `HEAD`.
-- If there is uncommitted work, create a snapshot ref with `git stash create` and `git update-ref`; this must not change the working tree.
-- Print the backup refs and exact restore commands before proceeding.
-
-Useful pattern:
+Before changing anything: capture `git status --short --branch`, current branch, and recent `git log`; create a backup ref at `HEAD` and, if there is dirty work, a `git stash create` ref via `git update-ref` (must not change the working tree); print backup refs and exact restore commands.
 
 ```bash
-BACKUP_NAME="refs/backup/split-work-into-commits-$(date +%s)"
-git update-ref "$BACKUP_NAME" HEAD
-
+BACKUP="refs/backup/split-work-into-commits-$(date +%s)"
+git update-ref "$BACKUP" HEAD
 SNAPSHOT=$(git stash create "split-work-into-commits snapshot")
-if [ -n "$SNAPSHOT" ]; then
-  git update-ref "${BACKUP_NAME}-worktree" "$SNAPSHOT"
-fi
+[ -n "$SNAPSHOT" ] && git update-ref "${BACKUP}-worktree" "$SNAPSHOT"
 ```
 
 ## Plan the split
@@ -67,12 +57,10 @@ For each planned commit:
 - Reset to the selected base or rewrite point using the backup as the recovery anchor.
 - Apply and stage only the files or hunks for the next semantic unit.
 - Include direct tests, fixtures, generated artifacts, and lockfiles required for that unit to validate.
-- Run the narrowest credible compile, lint, and test commands for the touched area.
+- Run the narrowest credible validation for the touched area (`AGENTS.md`, project scripts, CI). Ask if commands are ambiguous or unusually expensive.
 - Commit only after validation passes.
 
-Discover validation commands from repo instructions, package scripts, CI config, task runners, and recent conventions. If validation commands are ambiguous or unusually expensive, ask before committing.
-
-After all commits are built, run the full compile/lint/test suite once.
+After all commits are built, run the full suite once.
 
 ## If validation fails
 
