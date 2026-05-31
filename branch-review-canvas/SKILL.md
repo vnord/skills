@@ -10,69 +10,49 @@ description: >-
 
 # Branch review canvas
 
-Build a canvas that presents the requested diff reorganized for reviewer comprehension, not in file-tree order.
+Build a canvas that presents the requested diff reorganized for reviewer comprehension, not in file-tree order. For a prose teaching walkthrough, use `pr-walkthrough` instead.
 
 ## Prerequisites
 
-Read `~/.cursor/skills-cursor/canvas/SKILL.md` first. It contains the generation policy, design guidance, slop rules, self-check, and file-path conventions you must follow. The full component and hook surface is declared in `~/.cursor/skills-cursor/canvas/sdk/index.d.ts` and its sibling `.d.ts` files. Read them to discover exact exports and prop shapes rather than guessing.
+Read `~/.cursor/skills-cursor/canvas/SKILL.md` first. Component and hook shapes: `~/.cursor/skills-cursor/canvas/sdk/index.d.ts` and siblings — read, do not guess.
+
+## Comparison base
+
+- Use `@branch`, `@commit`, or another explicit Cursor diff reference when supplied — do not re-discover range with git.
+- Else use the checked-out branch against `main`; if absent, try `master`.
+- If PR metadata exists, prefer the PR's base branch.
+- If the base is still unclear, ask once — do not guess silently.
 
 ## Gather the diff
 
-If the user supplied an explicit Cursor context reference, such as `@branch` or `@commit`, treat that reference as the diff under review. Use the already-supplied context instead of running local git discovery commands just to infer a branch or commit range.
+When git is needed (no explicit diff reference):
 
-If the user did not supply an explicit diff reference, assume they want to review the current branch against `main`. Use local git commands only:
+- `git branch --show-current`, `git status --short --branch`
+- `git diff --stat <base>...HEAD` and `git diff --find-renames <base>...HEAD` for committed work
+- `git diff --stat` and `git diff --find-renames` for uncommitted edits that belong in the review
 
-- `git branch --show-current` to identify the branch under review.
-- `git status --short --branch` to capture branch state and uncommitted changes.
-- `git diff --stat main...HEAD` to collect changed files and overall additions/deletions.
-- `git diff --find-renames main...HEAD` to collect every committed hunk since the branch diverged from `main`.
-- `git diff --stat` and `git diff --find-renames` when the working tree has uncommitted changes that should appear in the canvas as local edits.
-
-If `main` is unavailable or the diff command fails, stop and report the exact blocker. Do not switch to another base branch unless the user explicitly asks. If an explicit Cursor reference is incomplete or does not include enough diff content to build the canvas, ask the user for the missing diff context instead of guessing.
+If the resolved base ref is missing or diff commands fail, stop and report the blocker. If an explicit reference lacks enough content, ask — do not guess.
 
 ## Group changes for comprehension
 
-Do not present files in alphabetical or tree order. Reorganize into sections ordered by reviewer value:
+Not alphabetical or tree order:
 
-- **Core logic**: New behavior, algorithm changes, state transitions, and API surface changes. Show full diffs with surrounding context.
-- **Wiring and integration**: Route registration, dependency injection, and config plumbing that connects the core logic. Condense enough to confirm correctness.
-- **Boilerplate and mechanical**: Import reordering, renames, generated code, formatting, and type re-exports. Summarize as a list of file names and stats. Avoid inline diffs unless a hunk is specifically relevant.
+- **Core logic**: behavior, algorithms, state, API surface — full diffs with context.
+- **Wiring and integration**: routes, DI, config — condensed enough to verify.
+- **Boilerplate and mechanical**: imports, renames, generated code — file list + stats unless a hunk matters.
 
-Lead with core logic. The reviewer's attention is freshest at the top.
+Lead with core logic.
 
-## Distill complex logic into pseudocode
+## Distill and call out
 
-When a core change involves dense or intricate logic, add a short pseudocode summary next to the diff. Use this for deeply nested conditions, state machines, retry or backoff flows, and multi-step transformations.
+- Pseudocode beside dense core hunks (state machines, retries, multi-step transforms) — not for straightforward edits.
+- Concrete input walkthrough (old vs new path) only when behavior is hard to predict from the hunk.
+- Tags (`Subtle`, `Breaking`, `Race condition`, `Perf`) + one sentence only for genuinely tricky items.
 
-The pseudocode should strip away language syntax, error handling, and boilerplate to expose the essential algorithm or control flow in a few lines. Straightforward changes do not need a pseudocode mirror.
+## Tone
 
-## Trace tricky logic on a concrete example
-
-When a hunk changes behavior in a way that is hard to predict from reading it, pick a concrete input and walk it through the old and new paths side by side. Highlight the step where they diverge and the observable outcome.
-
-Use this for genuinely surprising behavior changes, such as reordered effects, new short-circuits, or altered edge cases. Do not trace every core hunk.
-
-## Call attention to tricky things
-
-When a hunk contains something surprising, risky, or easy to miss, visually separate it from the surrounding diff and pair it with a short tag, such as "Subtle", "Breaking", "Race condition", or "Perf". Add a one-sentence explanation so the reviewer sees the concern and the code together.
-
-Reserve these callouts for genuinely tricky items. Overuse destroys signal.
-
-## Tone and content
-
-Write reviewer-facing commentary, not a changelog. Focus on:
-
-- Why something changed, not just what changed.
-- Interactions between files, such as a validator in one file being invoked by a route in another.
-- Anything the diff alone does not make obvious.
-- Whether local uncommitted edits are part of the review or separate from the committed branch diff.
-
-Keep commentary terse. One or two sentences per note.
+Reviewer-facing, terse (one or two sentences): why, cross-file interactions, what the diff hides, whether local edits are in scope.
 
 ## Be creative
 
-The sections above are a floor, not a ceiling. The goal is the fastest possible path for the reviewer to understand this specific change, so look at the diff in front of you and ask what representation would actually help.
-
-A tiny state diagram, a before/after call graph, a table of input-to-output pairs, a timeline of commits, a confidence annotation per file, or a single large callout with everything else collapsed may fit better than a uniform walkthrough.
-
-The canvas SDK has charts, tables, diff views, DAG layout, cards, stats, interactive state, and more. Reach for whichever components best serve the change at hand. A review of a refactor looks different from a review of a bug fix or a new feature. Let the canvas reflect that.
+Sections above are a floor. Pick canvas components (charts, tables, diff views, DAG, cards) that fit this change — refactor vs bugfix vs feature may need different layouts.
