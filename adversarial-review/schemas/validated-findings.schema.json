@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AdversarialReviewValidatedFindings",
+  "type": "object",
+  "required": ["round", "validations"],
+  "properties": {
+    "round": { "type": "integer", "minimum": 1 },
+    "validations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "verdict"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^F[0-9]+$" },
+          "verdict": { "enum": ["confirm", "pushback", "unclear"] },
+          "pushback": { "type": "string" },
+          "regression_risk": { "enum": ["low", "medium", "high"] }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,34 @@
+# Copy to ~/.config/adversarial-review/config.toml and edit.
+# On first run without config, the skill will ask for these values and offer to persist them.
+
+[critic]
+harness = "agent"
+command = "agent"
+model = "composer-2.5"
+# Read-only review; --trust avoids workspace prompts in headless runs.
+args = ["--print", "--trust", "--mode", "plan"]
+
+[validator]
+harness = "codex"
+command = "codex"
+model = "gpt-5.5-medium"
+args = ["exec", "--sandbox", "read-only"]
+
+[fix]
+# Parent applies fixes: Cursor Task by default, or agent CLI when configured.
+harness = "cursor-task"
+subagent_type = "generalPurpose"
+# When harness = "agent":
+# command = "agent"
+# model = "composer-2.5"
+# args = ["--print", "--trust", "--force"]
+
+[review]
+skills = ["grug-review", "thermo-nuclear-code-quality-review"]
+# Resolved from, in order: ~/.agents/skills/<name>/SKILL.md, ~/.cursor/skills/<name>/SKILL.md, .cursor/skills/<name>/SKILL.md
+
+[session]
+max_rounds = 10
+push_on_complete = false
+# Default comparison base when not passed on the command line: merge-base with upstream or main.
+base_ref = "auto"

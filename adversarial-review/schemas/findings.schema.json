@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AdversarialReviewFindings",
+  "type": "object",
+  "required": ["round", "findings"],
+  "properties": {
+    "round": { "type": "integer", "minimum": 1 },
+    "base_ref": { "type": "string" },
+    "head_sha": { "type": "string" },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "source", "severity", "title", "finding", "recommendation"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^F[0-9]+$" },
+          "source": { "enum": ["grug-review", "thermo-nuclear-code-quality-review"] },
+          "severity": { "enum": ["blocker", "suggestion", "nit"] },
+          "title": { "type": "string" },
+          "files": { "type": "array", "items": { "type": "string" } },
+          "lines": { "type": "string" },
+          "finding": { "type": "string" },
+          "recommendation": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
