@@ -1,5 +1,5 @@
 # Copy to ~/.config/adversarial-review/config.toml and edit.
-# On first run without config, the skill will ask for these values and offer to persist them.
+# On first run without config, the parent asks once (or uses these defaults for AFK).
 
 [critic]
 harness = "agent"
@@ -13,6 +13,8 @@ harness = "codex"
 command = "codex"
 model = "gpt-5.5-medium"
 args = ["exec", "--sandbox", "read-only"]
+# Max wall time before parent treats validator as failed and uses fallback adjudication.
+timeout_seconds = 600
 
 [fix]
 # Parent applies fixes: Cursor Task by default, or agent CLI when configured.
@@ -25,10 +27,14 @@ subagent_type = "generalPurpose"
 
 [review]
 skills = ["grug-review", "thermo-nuclear-code-quality-review"]
-# Resolved from, in order: ~/.agents/skills/<name>/SKILL.md, ~/.cursor/skills/<name>/SKILL.md, .cursor/skills/<name>/SKILL.md
+# Resolved via skill path order in SKILL.md (siblings in this repo, then ~/.agents/skills, etc.)
 
 [session]
 max_rounds = 10
 push_on_complete = false
 # Default comparison base when not passed on the command line: merge-base with upstream or main.
 base_ref = "auto"
+# Repo-relative session root (must be inside the git workspace so agent/codex can write).
+dir = ".adversarial-review/sessions"
+# Optional: also copy session tree here when the run completes (for cross-repo history).
+mirror_to_config = false
