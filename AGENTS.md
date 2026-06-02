@@ -5,49 +5,79 @@ alwaysApply: true
 
 # Global Agent Guidance
 
-## Dependency Safety
+Behavioral guidelines to reduce common LLM coding mistakes.
 
-Assume this machine may use package-manager safety controls such as:
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial, bounded tasks, prefer acting over interrogating.
 
-- minimum package release age
-- disabled lifecycle or install scripts
-- lockfile-enforced workflows
+## Think before coding
 
-When dependency installation fails:
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-- consider package policy restrictions before retrying
-- do not repeatedly retry the same install command
-- do not suggest weakening safety controls unless explicitly asked
-- explain the likely policy-related cause and suggest a compliant alternative
+Before implementing:
 
-For Node ecosystems:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+- Challenge questionable requests; clarify with context before implementing, especially for questions or options with hidden trade-offs.
+- Prefer explicit behavior over implicit behavior, defaults, and silent fallbacks.
+- Keep concerns cleanly separated.
+- When reviewing code, challenge choices and assumptions — especially implicit ones.
+- Prefer functional, pure-style approaches only when they reduce total complexity for this task; avoid unnecessary mutation and keep side effects narrow and obvious.
 
-- prefer lockfile-driven workflows
-- prefer pinned and fully resolved dependency installs
-- prefer CI-safe commands like `npm ci`, `pnpm install --frozen-lockfile`, and `yarn install --immutable` when appropriate
-- avoid ad hoc dependency upgrades unless explicitly requested
-- avoid unnecessary new dependency additions
-- preserve lockfile determinism whenever possible
+## Simplicity first
 
-When proposing fixes:
+**Minimum code that solves the problem. Nothing speculative.**
 
-- prefer solutions that work with package age gates and disabled scripts
-- call out when a package is too new and may be blocked by policy
-- suggest manual follow-up only when the policy-compliant path is not available
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If your draft is much longer than the task warrants, rewrite it before presenting — without expanding scope into surrounding code.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## Surgical changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it — don't delete it.
+
+When your changes create orphans:
+
+- Remove imports, variables, and functions that your changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: every changed line should trace directly to the user's request.
+
+## Goal-driven execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+
+- "Add validation" → write tests for invalid inputs, then make them pass
+- "Fix the bug" → write a test that reproduces it, then make it pass
+- "Refactor X" → ensure tests pass before and after
+
+Prefer test-driven style when practical. Avoid mocking except at clear I/O or external boundaries.
+
+For multi-step tasks, state a brief plan with a verification step for each stage.
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
 ## Task workflow
 
+- Commit verified sub-tasks as part of normal workflow — do not wait for an explicit "commit" request.
 - On large tasks, commit regularly rather than accumulating one large diff at the end.
 - Aim for small, self-contained commits: one logical change that is easy to review, revert, or cherry-pick on its own.
-- Each commit must leave the tree green and correct. Run relevant tests, lint, or build checks before committing; do not commit broken, failing, or knowingly incomplete work.
+- Each commit must leave the tree green and correct; do not commit broken, failing, or knowingly incomplete work.
 - When a well-defined sub-task is fully implemented and verified, commit it, then continue with the next sub-task.
-
-## Implementation judgment
-
-- Challenge questionable requests; clarify with context before implementing, especially for questions or options with hidden trade-offs. Push back when a decision has drawbacks the user may not see.
-- Prefer explicit behavior over implicit behavior, defaults, and silent fallbacks.
-- Keep concerns cleanly separated.
-- Prefer referential transparency, composability, and testability. Prefer functional, pure-style approaches where it fits; avoid unnecessary mutation and keep side effects narrow and obvious.
 
 ## Code style
 
@@ -57,16 +87,7 @@ When proposing fixes:
 
 ## Markdown
 
-- Do not use numbered sections in markdown documents (for example, do not structure the document as “1. … 2. …”); use headings and bullets instead.
-
-## Testing
-
-- Prefer a test-driven style when it is practical for the work.
-- Avoid mocking; use it only as a last resort, at clear I/O or external boundaries.
-
-## Reviews
-
-- When reviewing code, challenge choices and assumptions, especially implicit ones.
+- Do not use numbered sections in markdown documents (for example, do not structure the document as "1. … 2. …"); use headings and bullets instead.
 
 ## Local project guidance
 
