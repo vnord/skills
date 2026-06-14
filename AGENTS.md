@@ -1,13 +1,12 @@
 ---
-description: Global guidance for all coding agents on this machine
+description: Global guidance for all coding agents
 alwaysApply: true
 ---
 
 # Global Agent Guidance
 
-Behavioral guidelines to reduce common LLM coding mistakes.
 
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial, bounded tasks, prefer acting over interrogating.
+
 
 ## Think before coding
 
@@ -23,7 +22,7 @@ Before implementing:
 - Prefer explicit behavior over implicit behavior, defaults, and silent fallbacks.
 - Keep concerns cleanly separated.
 - When reviewing code, challenge choices and assumptions — especially implicit ones.
-- Prefer functional, pure-style approaches only when they reduce total complexity for this task; avoid unnecessary mutation and keep side effects narrow and obvious.
+- Prefer functional, pure-style approaches when they reduce total complexity for this task; avoid unnecessary mutation and keep side effects narrow and obvious.
 
 ## Simplicity first
 
@@ -71,6 +70,10 @@ For multi-step tasks, state a brief plan with a verification step for each stage
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## Suggest improvements
+
+If you can identify significant friction that could be reduced, or simpler and faster approaches that could reduce cycle times, always let me know. We really want to improve our processes.
+
 ## Task workflow
 
 - Commit verified sub-tasks as part of normal workflow — do not wait for an explicit "commit" request.
@@ -79,7 +82,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Each commit must leave the tree green and correct; do not commit broken, failing, or knowingly incomplete work.
 - When a well-defined sub-task is fully implemented and verified, commit it, then continue with the next sub-task.
 
-## Code style
+## Style
 
 - Prefer sentence case.
 - Avoid excessive explanatory comments; comment only when something is non-obvious or would be surprising.
@@ -93,3 +96,4 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 - When working in a repository, after reading the normal project instructions, check for an `AGENTS.local.md` file at the repository root. If it exists, read it too; it is developer-specific, git-ignored guidance for that project.
 - Treat `AGENTS.local.md` as local-only: do not stage, commit, push, print secrets from it, or assume it exists for other contributors.
+
