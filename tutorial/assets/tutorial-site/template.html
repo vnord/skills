@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-tutorial-id="{{ID}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="{{DESCRIPTION}}">
+  <title>{{TITLE}}</title>
+  <style>{{STYLE}}</style>
+</head>
+<body id="top">
+  <a class="skip" href="#content">Skip to tutorial</a>
+  <div class="reading-progress" aria-hidden="true"><div id="reading-progress"></div></div>
+  <aside class="sidebar" aria-label="Tutorial navigation">
+    <a class="brand" href="#top"><span>{{PROJECT}}<br><small>RUST TUTORIAL</small></span></a>
+    <p class="sidebar-caption">CONTENTS</p>
+    <nav>{{NAV}}</nav>
+    <div class="sidebar-bottom"><p id="checkpoint-count">0 / {{CHECKS}} checkpoints</p></div>
+  </aside>
+  <div class="page">
+    <header class="topbar"><span>{{BASELINE_LABEL}}</span><div><button id="theme-toggle" type="button" aria-pressed="false">Dark theme</button><button id="print" type="button">Print / PDF</button></div></header>
+    <main id="content">
+      <article>{{ARTICLE}}</article>
+      <footer class="footer"><span>{{PROJECT}}</span><a href="tutorial.md">Expanded Markdown</a><a href="#top">Back to top ↑</a></footer>
+    </main>
+  </div>
+  <div id="copy-status" class="sr-only" role="status" aria-live="polite"></div>
+  <script>{{SCRIPT}}</script>
+</body>
+</html>

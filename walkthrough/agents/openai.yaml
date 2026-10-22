@@ -1,0 +1,4 @@
+interface:
+  display_name: "Rust branch walkthrough"
+  short_description: "Walk through every commit on a branch"
+  default_prompt: "Use $walkthrough to walk me through every commit on this branch compared to master — each commit's motivation, what the code is doing, and line-by-line explanation where it matters. Pause after each commit for my questions."
