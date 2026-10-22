@@ -3,7 +3,6 @@ name: walkthrough
 description: Walk interactively through every commit on a branch (usually compared to master) to fully understand it — each commit's motivation, what the code is doing, and line-by-line Rust explanation where it matters. A teaching conversation, not a review; for a terse reviewer-facing canvas use branch-review-canvas, for implementing a plan use tutorial.
 metadata:
   opencode/slash: "true"
-  opencode/autoinvoke: "false"
 ---
 
 # Rust branch walkthrough

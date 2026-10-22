@@ -3,7 +3,6 @@ name: tutorial
 description: Turn a Rust implementation plan and the current repository into an illustrated tutorial with correct, idiomatic, validated Rust, explanations matched to the reader, and commit checkpoints. Use when the user wants to implement a Rust change themselves from a tutorial; not for executing the implementation or reviewing an existing diff.
 metadata:
   opencode/slash: "true"
-  opencode/autoinvoke: "false"
 ---
 
 # Rust implementation tutorials
