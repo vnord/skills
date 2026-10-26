@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test-first Rust pairing"
+  short_description: "Pair-program a Rust plan one test-first step at a time"
+  default_prompt: "Use $pair to pair with me on this Rust implementation plan: one small step at a time, give me the validated test and the context I need, let me write the implementation, and review it. I'll ask questions and challenge decisions along the way. Keep the test/fix commits but assume I understand TDD."

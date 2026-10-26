@@ -1,4 +1,0 @@
-interface:
-  display_name: "Rust implementation tutorial"
-  short_description: "Create Rust tutorials from implementation plans"
-  default_prompt: "Use $tutorial to turn this Rust implementation plan into a tutorial with correct, idiomatic, validated Rust, diagrams, and explanations matched to my experience. Keep the test/fix commits but assume I understand TDD."
