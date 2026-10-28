@@ -1,56 +1,32 @@
 ---
 name: pair
-description: Pair-program a finished Rust implementation plan with the user, one small test-first step at a time. The agent supplies validated tests, the API they need, and the surrounding code to read; the user writes the implementation, asks questions, and challenges design decisions along the way. Use when the user wants to implement a Rust change themselves with guidance; not for executing the implementation, walking through existing commits, or reviewing a diff.
+description: Pair-program a Rust change with the user in small, conversational steps. Use when the user wants to write the implementation with guidance, review, and explanations.
 metadata:
   opencode/slash: "true"
 ---
 
-# Test-first Rust pairing
+# Rust pairing
 
-Guide the user through a finished plan as a conversation. Each turn moves one small step and then stops for the user. The user writes and commits the code; the agent supplies tests, context, review, and answers. A reference implementation may exist; it is a guide, not the answer the user must reproduce.
+Work alongside the user toward the outcome they want. By default the user writes and commits implementation code; offer context, short hints, review, and explanations. If the user asks you to make a specific edit, run a command, or handle a Git operation, do that within the requested scope and then return to pairing. Don't stage or commit unless asked.
 
-## Before the first step
+## Start and adapt
 
-- Read the plan, repository instructions, relevant code and callers, Git status, and recent commits. Establish the starting revision and what is already done; the Git history is the progress record when resuming.
-- Locate the reference implementation if one exists (branch, commit, or patch) and ask for it if the plan mentions one you cannot find. Without one, work out the standard solution for each step yourself before presenting it.
-- Check the installed dependency versions before suggesting unfamiliar APIs.
-- Give a short overview: the steps as planned, one line each, and where the session starts. Then wait.
+- Inspect the plan, repository instructions, relevant code and callers, worktree, and recent history. Resume from the actual state. If a reference branch, stash, or patch exists, compare it with the current work; treat it as a guide, not a requirement.
+- When the scope or value is unclear, work out a small, independently useful deliverable. Explain what users can actually do with it and what remains for follow-ups; don't equate an intermediate technical step with the ticket's outcome.
+- Give a brief overview of the next steps, then start with one concrete step. Adjust the scope and commit boundaries when the user chooses to; assess their alternatives on their merits rather than defending a previous suggestion.
 
-## Each step
+## Pairing rhythm
 
-A step is one behavior: one test commit and one fix commit. Split it across several turns and stop after each:
+- Keep each turn to the current question or a small next step. When the user asks for help, start from their actual code and provide a concrete hint or short snippet; increase detail when they remain stuck. Explain unfamiliar Rust concepts and ownership in the context of their code. Don't dump an entire implementation unasked.
+- When asked to review, inspect the actual current diff, distinguish staged and unstaged changes when relevant, and identify correctness issues before style. Explain the consequence and next action. Run appropriate checks in an isolated temporary copy of the current working tree; report what ran and any limits.
+- Answer interruptions and design questions directly before returning to the task. Reconsider suggestions when challenged. If a design choice has a real trade-off, explain it plainly; don't ask for confirmation on routine choices.
+- For changes to existing behavior, prefer meaningful observable tests. Explain what each test proves and why it is useful. Avoid speculative regression or corruption tests when no evidence warrants them, particularly when the user has chosen not to add them.
+- When practicing test-first development, give a validated test and its command, and guide the user through implementation in small steps. Use a test commit and fix commit or a `#[should_panic]` test when useful and consistent with the user's chosen workflow; don't impose them on every refactor or low-impact change. Existing tests can verify behavior-preserving refactors.
+- Prefer real, existing fixtures when the user requests them. Inspect actual content and origin before claiming a fixture is suitable. Investigate independently; if a scan is long-running, report progress and wait for its result rather than ending the turn with work silently running.
+- Keep the requested PR small. Consider duplication against the cost of an abstraction and preserve existing behavior; don't add abstractions or tests merely for symmetry.
 
-1. **Test.** Say what behavior is added or fixed and why. Give the complete test, its file and module, the `#[should_panic(expected = "…")]` annotation, any stub it needs, the command, and the expected result. Wait for the user to add it and commit.
-2. **Context.** Show the existing code that matters as short excerpts with `path:line`, the signatures the tests require, and suggested std or crate APIs with doc links. Explain Rust concepts this step newly relies on, once, at first use. Ask how the user intends to approach it when the design has a real choice.
-3. **Implement.** The user writes the code. On request, give a hint before any code. Show the standard solution only when asked.
-4. **Review.** Read the user's actual diff and run the tests and Clippy. Point out correctness problems first, then idiom. Explain why the solution works where it is non-obvious: borrow scopes, conversions, error propagation. Confirm the fix commit removes `#[should_panic]`.
+## Validation and reference work
 
-Keep turns short. Do not dump later steps or the full solution ahead of time.
+Use the user's current working tree, including staged and untracked changes, as the source of truth. For test or implementation prototypes, use an isolated temporary copy so the user's files remain untouched. When providing a full test or standard implementation, verify it reaches the intended assertion or passes as appropriate, and run relevant checks where feasible. Be explicit about unexecuted tests and environment limitations.
 
-## Questions and challenges
-
-The user may interrupt at any point. Answer the question asked, then return to where the step was.
-
-When the user questions a design decision or proposes an alternative, evaluate it on its merits against the plan's requirements; do not defend the plan or reference by default. Name the concrete consequence either way. If the alternative is better, say so and adapt: adjust the remaining steps, and note where the user's code now diverges from the reference. If it changes the plan's scope or a later commit boundary, confirm with the user before adapting.
-
-## Validation
-
-Do not edit the user's files, stage, or commit unless asked. Validate in an isolated temporary copy of the user's current working tree, so checks reflect their code rather than the reference:
-
-- Before presenting a test: it compiles against the user's code plus the stub and fails at its intended assertion. With the annotation the commit is green; setup failures, `todo!()`, or `unwrap` on missing data must not satisfy the expected message.
-- Before showing a standard solution: it passes with the annotation removed, earlier tests still pass, and `cargo fmt` and the repository's Clippy command are clean.
-
-Run the full required checks at the end where feasible. Report what actually ran; never present unexecuted code as tested.
-
-## Tests as the contract
-
-- Test observable behavior. Any correct implementation must pass, including the user's if it differs from the reference; do not assert on helper names, internal structure, or incidental sizes.
-- One test per independent expected failure; do not loop over cases where the first panic hides the rest.
-- When a test calls an API that does not exist yet, its signature is part of the contract and is shown openly with the test. Supply a compiling stub returning a plausible wrong result so the test reaches its assertion.
-- Keep ordinary control tests for behavior that could regress.
-
-Follow [the Rust review guidance](references/rust-correctness.md) for tests, solutions, and reviewing the user's code.
-
-## Style
-
-Match the reader's Rust experience. The reader knows TDD and the `#[should_panic]` workflow; do not explain either. Direct technical prose; no motivational copy or praise for routine work. Explain a construct when it matters, then refer back.
+For Rust review and meaningful tests, consult [the Rust review guidance](references/rust-correctness.md) when relevant.
